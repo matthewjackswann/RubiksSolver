@@ -1,0 +1,4 @@
+# Project exclude paths
+/frontEnd/node_modules/
+/frontEnd/build/
+.idea
