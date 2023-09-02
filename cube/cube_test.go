@@ -99,7 +99,7 @@ func TestCube_Ids(t *testing.T) {
 	cubeIdEquivalentCheck(t, "UUrrDFbULR", []string{"DDffURlDBF", "RRffLUdRBF", "BBddFRlBUD", "RRddLFbRUD", "FFddBLrFUD"})
 }
 
-func TestCube_Transform_Commutative(t *testing.T) { // todo check commutative is the correct word
+func TestCube_Transform_Commutative(t *testing.T) {
 	c := NewSolvedCube()
 	c.Transform("FBudRbLrUru")
 	d := NewSolvedCube()
@@ -115,7 +115,7 @@ func TestCube_Transform_Commutative(t *testing.T) { // todo check commutative is
 	}
 }
 
-func TestCube_Transform_Rotate_Commutative(t *testing.T) { // todo check commutative is the correct word
+func TestCube_Transform_Rotate_Commutative(t *testing.T) {
 	c := NewSolvedCube()
 	c.Transform("FzBudXRbLryUru")
 	d := NewSolvedCube()
