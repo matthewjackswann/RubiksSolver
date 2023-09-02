@@ -49,6 +49,7 @@ func StartSolutionGenerator(db DBConnection, init []int, i, maximumDepth int) {
 	dbSaveChan := make(chan batchResults)
 	dbSaveChanResult := make(chan bool, 1)
 	dbSaveChanResult <- true // skips over first save as successful
+	wg.Add(1)
 	go saveWorker(db, dbSaveChan, dbSaveChanResult, wg)
 
 	generatingCubes := true
@@ -181,6 +182,12 @@ func saveWorker(db DBConnection, dbSaveChan chan batchResults, dbSaveChanResult 
 
 	for {
 		toSave := <-dbSaveChan
+
+		if toSave.results == nil {
+			db.Close()
+			return
+		}
+
 		fmt.Print("\033[1A\x1b[2K")
 
 		b := make([]string, len(toSave.lastTransform))
@@ -193,14 +200,17 @@ func saveWorker(db DBConnection, dbSaveChan chan batchResults, dbSaveChanResult 
 
 		if len(toSave.lastTransform) != lastStackSize {
 			lastStackSize = len(toSave.lastTransform)
+			fmt.Print("\033[1A\x1b[2K")
 			fmt.Printf("Stack %d: %f%%\n\n", lastStackSize, getDiskUsePercentage())
 		}
 
-		if toSave.results == nil {
-			db.Close()
-			return
+		success := db.Save(toSave.results, toSave.transformNo, encodedStack)
+		//if getDiskUsePercentage() > 99.9 {
+		if getDiskUsePercentage() > 0.1 {
+			fmt.Println("Disk low on space")
+			dbSaveChanResult <- false
 		} else {
-			dbSaveChanResult <- db.Save(toSave.results, toSave.transformNo, encodedStack)
+			dbSaveChanResult <- success
 		}
 	}
 }
