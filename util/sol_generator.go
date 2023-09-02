@@ -31,7 +31,6 @@ func StartSolutionGenerator(db DBConnection, init []int, i, maximumDepth int) {
 		stop <- struct{}{}
 	}()
 
-	workerNumber := 7
 	//batchSize := 1000000
 	batchSize := 1000
 
@@ -41,12 +40,9 @@ func StartSolutionGenerator(db DBConnection, init []int, i, maximumDepth int) {
 	cubeIds := make(chan cubeResult, batchSize)
 
 	wg := new(sync.WaitGroup)
-	workerStopChannels := make([]chan interface{}, workerNumber)
-	for i := 0; i < workerNumber; i++ {
-		wg.Add(1)
-		workerStopChannels[i] = make(chan interface{})
-		go cubeWorker(cubeTransforms, cubeIds, workerStopChannels[i], wg)
-	}
+	workerStopChannel := make(chan interface{})
+	wg.Add(1)
+	go cubeWorker(cubeTransforms, cubeIds, workerStopChannel, wg)
 
 	fmt.Println("Made cube workers")
 
@@ -102,10 +98,8 @@ func StartSolutionGenerator(db DBConnection, init []int, i, maximumDepth int) {
 		}
 	}
 
-	fmt.Println("Stopping workers")
-	for i := 0; i < workerNumber; i++ {
-		workerStopChannels[i] <- new(interface{})
-	}
+	fmt.Println("Stopping worker")
+	workerStopChannel <- new(interface{})
 	fmt.Println("Stopping db goroutine and closing db connection")
 	dbSaveChan <- batchResults{results: nil}
 
