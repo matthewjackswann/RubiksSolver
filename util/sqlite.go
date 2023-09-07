@@ -172,7 +172,7 @@ func (dbConnection *DBConnection) loadSolution(id uint128.Uint128) (string, bool
 	return solution, true
 }
 
-func (dbConnection *DBConnection) SolveCube(cubeId uint128.Uint128, rotation string) (string, bool) {
+func (dbConnection *DBConnection) LookupCube(cubeId uint128.Uint128, rotation string) (string, bool) {
 	if cubeId.Equals(cube.SolvedCubeId) {
 		return "", true
 	}
@@ -181,4 +181,52 @@ func (dbConnection *DBConnection) SolveCube(cubeId uint128.Uint128, rotation str
 		return "", false
 	}
 	return cube.RotateTransform(rotation, idSolution), true
+}
+
+type lookupWorkerRequest struct {
+	cube *cube.Cube
+	data interface{}
+}
+
+type lookupWorkerResponse struct {
+	cube     *cube.Cube
+	success  bool
+	solution string
+	data     interface{}
+}
+
+// StartLookupWorkers takes requests from the requestChan, looks it up in the db and sends a result to the resultChan
+func (dbConnection *DBConnection) StartLookupWorkers(requestChan chan *lookupWorkerRequest, resultsChan chan *lookupWorkerResponse, workers int) {
+	for worker := 0; worker < workers; worker++ {
+		go func() {
+			for {
+				job := <-requestChan
+				if job == nil {
+					resultsChan <- nil
+					return
+				}
+
+				solution, success := dbConnection.LookupCube(job.cube.EncodeCube())
+				resultsChan <- &lookupWorkerResponse{
+					cube:     job.cube,
+					success:  success,
+					solution: solution,
+					data:     job.data,
+				}
+			}
+		}()
+	}
+}
+
+func (dbConnection *DBConnection) StopLookupWorkers(requestChan chan *lookupWorkerRequest, resultsChan chan *lookupWorkerResponse, workers int) {
+	for i := 0; i < workers; i++ {
+		requestChan <- nil
+	}
+	for i := 0; i < workers; i++ {
+		r := <-resultsChan
+		if r != nil {
+			fmt.Println("When closing lookup workers the results chan wasn't empty")
+			i -= 1 // wait an extra iteration
+		}
+	}
 }

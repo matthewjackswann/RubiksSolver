@@ -17,7 +17,7 @@ func checkTransformInverseExists(t *testing.T, moves string, db DBConnection, ma
 	c := cube.NewSolvedCube()
 	c.Transform(moves)
 
-	solution, solFound := db.SolveCube(c.EncodeCube())
+	solution, solFound := db.LookupCube(c.EncodeCube())
 	if !solFound {
 		t.Errorf("Cube with setup %s should have a solution in the DB", moves)
 	}
@@ -138,4 +138,68 @@ func TestOneMillionCubes(t *testing.T) {
 	}
 
 	db.Close()
+}
+
+func TestOneMillionCubesThreaded(t *testing.T) {
+	db := Create("/media/swanny/Lexar/rubiks.db")
+
+	requestChan := make(chan *lookupWorkerRequest, 64)
+	resultsChan := make(chan *lookupWorkerResponse, 64)
+
+	db.StartLookupWorkers(requestChan, resultsChan, 8)
+
+	rand.Seed(1)
+
+	stringLength := getLastFullLayer(db.GetNextTransforms().EncodedStack)
+
+	sentCubes := 0
+	receivedCubes := 0
+
+	cubeSetup, c := generateRandomCubeWithSolutionLength(stringLength)
+
+	for receivedCubes < 1000000 { // while not all cubes have had their result calculated
+		if sentCubes < 1000000 { // both send and receive cubes
+			select {
+			case requestChan <- &lookupWorkerRequest{cube: c, data: cubeSetup}:
+				cubeSetup, c = generateRandomCubeWithSolutionLength(stringLength)
+				sentCubes += 1
+			case result := <-resultsChan:
+				if !result.success {
+					t.Errorf("Failed to lookup cube with setup %s in database", result.data)
+				}
+				result.cube.Transform(result.solution)
+				if !result.cube.IsSolved() {
+					t.Errorf("Cube with setup %s should be solved with %s but this is not the case", result.data, result.solution)
+				}
+				if receivedCubes%100000 == 0 {
+					fmt.Printf("Finished iteration %d/1000000\n", receivedCubes)
+				}
+				receivedCubes += 1
+			}
+		} else { // just receive cubes
+			result := <-resultsChan
+			if !result.success {
+				t.Errorf("Failed to lookup cube with setup %s in database", result.data)
+			}
+			result.cube.Transform(result.solution)
+			if !result.cube.IsSolved() {
+				t.Errorf("Cube with setup %s should be solved with %s but this is not the case", result.data, result.solution)
+			}
+			receivedCubes += 1
+		}
+	}
+
+	db.StopLookupWorkers(requestChan, resultsChan, 8)
+
+	db.Close()
+}
+
+func generateRandomCubeWithSolutionLength(stringLength int) (string, *cube.Cube) {
+	cubeSetup := ""
+	for j := 0; j < stringLength; j++ {
+		cubeSetup += []string{"f", "F", "u", "U", "l", "L", "r", "R", "b", "B", "d", "D"}[rand.Intn(12)]
+	}
+	c := cube.NewSolvedCube()
+	c.Transform(cubeSetup)
+	return cubeSetup, c
 }
