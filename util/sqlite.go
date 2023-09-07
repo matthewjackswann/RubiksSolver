@@ -136,8 +136,9 @@ func (dbConnection *DBConnection) GetNextTransforms() QueryResult {
 	}
 }
 
-func (dbConnection *DBConnection) loadSolution(id uint128.Uint128) (string, bool) {
-	result, err := dbConnection.db.Query(fmt.Sprintf("SELECT solution FROM cubes WHERE cube_id_l = %d AND cube_id_h = %d;", int64(id.L), int64(id.H)))
+func loadSolution(id uint128.Uint128, preparedStmt *sql.Stmt) (string, bool) {
+	//result, err := dbConnection.db.Query(fmt.Sprintf("SELECT solution FROM cubes WHERE cube_id_l = %d AND cube_id_h = %d;", int64(id.L), int64(id.H)))
+	result, err := preparedStmt.Query(int64(id.L), int64(id.H))
 	if err != nil {
 		fmt.Println(err)
 		return "", false
@@ -176,7 +177,16 @@ func (dbConnection *DBConnection) LookupCube(cubeId uint128.Uint128, rotation st
 	if cubeId.Equals(cube.SolvedCubeId) {
 		return "", true
 	}
-	idSolution, success := dbConnection.loadSolution(cubeId)
+	stmt, err := dbConnection.db.Prepare("SELECT solution FROM cubes WHERE cube_id_l = ? AND cube_id_h = ?;")
+	if err != nil {
+		fmt.Printf("Error creating prepared statement %s\n", err)
+		return "", false
+	}
+	return dbConnection.lookupCube(cubeId, rotation, stmt)
+}
+
+func (dbConnection *DBConnection) lookupCube(cubeId uint128.Uint128, rotation string, stmt *sql.Stmt) (string, bool) {
+	idSolution, success := loadSolution(cubeId, stmt)
 	if !success {
 		return "", false
 	}
@@ -214,25 +224,40 @@ func (p ParallelDatabaseLookup) Stop() {
 	}
 }
 
-// StartLookupWorkers takes requests from the requestChan, looks it up in the db and sends a result to the resultChan
-func (dbConnection *DBConnection) StartLookupWorkers(bufferSize, workerCount int) ParallelDatabaseLookup {
+func CreateLookupWorkers(bufferSize, workerCount int) ParallelDatabaseLookup {
 	requestChan := make(chan *lookupWorkerRequest, bufferSize)
 	resultsChan := make(chan *lookupWorkerResponse, bufferSize)
 	for worker := 0; worker < workerCount; worker++ {
 		go func() {
+			dbConnection := Create("/media/swanny/Lexar/rubiks.db?cache=shared&mode=ro")
+			stmt, err := dbConnection.db.Prepare("SELECT solution FROM cubes WHERE cube_id_l = ? AND cube_id_h = ?;")
+			if err != nil {
+				fmt.Printf("Error creating prepared statement\n")
+				panic(err)
+			}
+			defer dbConnection.Close()
 			for {
 				job := <-requestChan
 				if job == nil {
 					resultsChan <- nil
 					return
 				}
-
-				solution, success := dbConnection.LookupCube(job.cube.EncodeCube())
-				resultsChan <- &lookupWorkerResponse{
-					cube:     job.cube,
-					success:  success,
-					solution: solution,
-					data:     job.data,
+				cid, rot := job.cube.EncodeCube()
+				if cid == cube.SolvedCubeId {
+					resultsChan <- &lookupWorkerResponse{
+						cube:     job.cube,
+						success:  true,
+						solution: "",
+						data:     job.data,
+					}
+				} else {
+					solution, success := dbConnection.lookupCube(cid, rot, stmt)
+					resultsChan <- &lookupWorkerResponse{
+						cube:     job.cube,
+						success:  success,
+						solution: solution,
+						data:     job.data,
+					}
 				}
 			}
 		}()

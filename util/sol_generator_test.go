@@ -143,7 +143,7 @@ func TestOneMillionCubes(t *testing.T) {
 func TestOneMillionCubesThreaded(t *testing.T) {
 	db := Create("/media/swanny/Lexar/rubiks.db")
 
-	parallelLookup := db.StartLookupWorkers(64, 8)
+	parallelLookup := CreateLookupWorkers(64, 8)
 	requestChan := parallelLookup.requestChan
 	resultsChan := parallelLookup.resultsChan
 
