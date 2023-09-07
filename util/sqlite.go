@@ -195,9 +195,30 @@ type lookupWorkerResponse struct {
 	data     interface{}
 }
 
+type ParallelDatabaseLookup struct {
+	requestChan chan *lookupWorkerRequest
+	resultsChan chan *lookupWorkerResponse
+	workerCount int
+}
+
+func (p ParallelDatabaseLookup) Stop() {
+	for i := 0; i < p.workerCount; i++ {
+		p.requestChan <- nil
+	}
+	for i := 0; i < p.workerCount; i++ {
+		r := <-p.resultsChan
+		if r != nil {
+			fmt.Println("When closing lookup workers the results chan wasn't empty")
+			i -= 1 // wait an extra iteration
+		}
+	}
+}
+
 // StartLookupWorkers takes requests from the requestChan, looks it up in the db and sends a result to the resultChan
-func (dbConnection *DBConnection) StartLookupWorkers(requestChan chan *lookupWorkerRequest, resultsChan chan *lookupWorkerResponse, workers int) {
-	for worker := 0; worker < workers; worker++ {
+func (dbConnection *DBConnection) StartLookupWorkers(bufferSize, workerCount int) ParallelDatabaseLookup {
+	requestChan := make(chan *lookupWorkerRequest, bufferSize)
+	resultsChan := make(chan *lookupWorkerResponse, bufferSize)
+	for worker := 0; worker < workerCount; worker++ {
 		go func() {
 			for {
 				job := <-requestChan
@@ -216,17 +237,9 @@ func (dbConnection *DBConnection) StartLookupWorkers(requestChan chan *lookupWor
 			}
 		}()
 	}
-}
-
-func (dbConnection *DBConnection) StopLookupWorkers(requestChan chan *lookupWorkerRequest, resultsChan chan *lookupWorkerResponse, workers int) {
-	for i := 0; i < workers; i++ {
-		requestChan <- nil
-	}
-	for i := 0; i < workers; i++ {
-		r := <-resultsChan
-		if r != nil {
-			fmt.Println("When closing lookup workers the results chan wasn't empty")
-			i -= 1 // wait an extra iteration
-		}
+	return ParallelDatabaseLookup{
+		requestChan: requestChan,
+		resultsChan: resultsChan,
+		workerCount: workerCount,
 	}
 }

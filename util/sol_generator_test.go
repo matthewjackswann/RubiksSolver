@@ -143,10 +143,9 @@ func TestOneMillionCubes(t *testing.T) {
 func TestOneMillionCubesThreaded(t *testing.T) {
 	db := Create("/media/swanny/Lexar/rubiks.db")
 
-	requestChan := make(chan *lookupWorkerRequest, 64)
-	resultsChan := make(chan *lookupWorkerResponse, 64)
-
-	db.StartLookupWorkers(requestChan, resultsChan, 8)
+	parallelLookup := db.StartLookupWorkers(64, 8)
+	requestChan := parallelLookup.requestChan
+	resultsChan := parallelLookup.resultsChan
 
 	rand.Seed(1)
 
@@ -189,8 +188,7 @@ func TestOneMillionCubesThreaded(t *testing.T) {
 		}
 	}
 
-	db.StopLookupWorkers(requestChan, resultsChan, 8)
-
+	parallelLookup.Stop()
 	db.Close()
 }
 
