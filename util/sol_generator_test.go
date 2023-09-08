@@ -142,14 +142,14 @@ func TestOneMillionCubes(t *testing.T) {
 
 func TestOneMillionCubesThreaded(t *testing.T) {
 	db := Create("/media/swanny/Lexar/rubiks.db")
+	stringLength := getLastFullLayer(db.GetNextTransforms().EncodedStack)
+	db.Close()
 
 	parallelLookup := CreateLookupWorkers(64, 8)
 	requestChan := parallelLookup.requestChan
 	resultsChan := parallelLookup.resultsChan
 
 	rand.Seed(1)
-
-	stringLength := getLastFullLayer(db.GetNextTransforms().EncodedStack)
 
 	sentCubes := 0
 	receivedCubes := 0
@@ -189,7 +189,6 @@ func TestOneMillionCubesThreaded(t *testing.T) {
 	}
 
 	parallelLookup.Stop()
-	db.Close()
 }
 
 func generateRandomCubeWithSolutionLength(stringLength int) (string, *cube.Cube) {
