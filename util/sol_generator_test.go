@@ -31,7 +31,7 @@ func checkTransformInverseExists(t *testing.T, moves string, db DBConnection, ma
 }
 
 func TestOneMoveCubes(t *testing.T) {
-	db := Create("/media/swanny/Lexar/rubiks.db")
+	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
 
 	if getLastFullLayer(db.GetNextTransforms().EncodedStack) < 1 {
 		t.Skip("Layer 1 is not in the database")
@@ -45,7 +45,7 @@ func TestOneMoveCubes(t *testing.T) {
 }
 
 func TestTwoMoveCubes(t *testing.T) {
-	db := Create("/media/swanny/Lexar/rubiks.db")
+	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
 
 	if getLastFullLayer(db.GetNextTransforms().EncodedStack) < 2 {
 		t.Skip("Layer 2 is not in the database")
@@ -61,7 +61,7 @@ func TestTwoMoveCubes(t *testing.T) {
 }
 
 func TestThreeMoveCubes(t *testing.T) {
-	db := Create("/media/swanny/Lexar/rubiks.db")
+	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
 
 	if getLastFullLayer(db.GetNextTransforms().EncodedStack) < 3 {
 		t.Skip("Layer 3 is not in the database")
@@ -79,7 +79,7 @@ func TestThreeMoveCubes(t *testing.T) {
 }
 
 func TestFourMoveCubes(t *testing.T) {
-	db := Create("/media/swanny/Lexar/rubiks.db")
+	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
 
 	if getLastFullLayer(db.GetNextTransforms().EncodedStack) < 4 {
 		t.Skip("Layer 4 is not in the database")
@@ -99,7 +99,7 @@ func TestFourMoveCubes(t *testing.T) {
 }
 
 func TestFiveMoveCubes(t *testing.T) {
-	db := Create("/media/swanny/Lexar/rubiks.db")
+	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
 
 	if getLastFullLayer(db.GetNextTransforms().EncodedStack) < 5 {
 		t.Skip("Layer 5 is not in the database")
@@ -121,7 +121,7 @@ func TestFiveMoveCubes(t *testing.T) {
 }
 
 func TestOneMillionCubes(t *testing.T) {
-	db := Create("/media/swanny/Lexar/rubiks.db")
+	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
 	rand.Seed(0)
 
 	stringLength := getLastFullLayer(db.GetNextTransforms().EncodedStack)
@@ -141,7 +141,7 @@ func TestOneMillionCubes(t *testing.T) {
 }
 
 func TestOneMillionCubesThreaded(t *testing.T) {
-	db := Create("/media/swanny/Lexar/rubiks.db")
+	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
 	stringLength := getLastFullLayer(db.GetNextTransforms().EncodedStack)
 	db.Close()
 

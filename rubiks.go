@@ -34,7 +34,7 @@ func main() {
 		startServer(*serverPort)
 
 	case "generate":
-		db := util.Create("/media/swanny/Lexar/rubiks.db")
+		db := util.CreateDBConnection("/media/swanny/Lexar/rubiks.db")
 		nextInfo := db.GetNextTransforms()
 		stackString := strings.Split(nextInfo.EncodedStack, ",")
 		initStack := make([]int, len(stackString))
