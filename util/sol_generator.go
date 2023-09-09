@@ -20,7 +20,7 @@ type cubeResult struct {
 
 func StartSolutionGenerator(db DBConnection, init []int, i, maximumDepth int) {
 	// setup generator
-	generator := cube.CreateNewGenerator(init, i, "cube/graph.csv") // todo include and increment i
+	generator := cube.CreateNewGenerator(init, i, "cube/graph.csv")
 
 	stop := make(chan struct{})
 	// func for receiving signal to start stopping the generator

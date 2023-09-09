@@ -64,3 +64,89 @@ func (dbConnection *DBConnection) lookupCube(cubeId uint128.Uint128, rotation st
 	}
 	return cube.RotateTransform(rotation, idSolution), true
 }
+
+func (dbConnection *DBConnection) SolveCubeBySearch(baseCube *cube.Cube, workers, maxDepth int) (string, bool) {
+	solution, success := dbConnection.LookupCube(baseCube.EncodeCube())
+	// not in lookup table, start brute forcing from cube direction
+	if success {
+		return solution, true
+	}
+
+	parallelLookup := CreateLookupWorkers(32, workers)
+	cubeTransformChan := make(chan string, 32)
+	cubeTransformWorkerStop := make(chan interface{}, workers)
+
+	for i := 0; i < workers; i++ {
+		go func() {
+			for {
+				transform := <-cubeTransformChan
+				if transform == "" {
+					cubeTransformWorkerStop <- nil
+					return
+				}
+				c := cube.NewCube(baseCube.Layout)
+				c.Transform(transform)
+				parallelLookup.requestChan <- &lookupWorkerRequest{
+					cube: c,
+					data: transform,
+				}
+			}
+		}()
+	}
+
+	generator := cube.CreateNewGenerator([]int{0}, 0, "../cube/graph.csv")
+	baseRotations := baseCube.GetNonSymmetricalRotations()
+
+	resultsFound := false
+	var lookupResult *lookupWorkerResponse
+
+	transformsInBuffer := 0
+	currentDepth := 0
+
+	for {
+		// send cubes
+		if generator.GetCurrentDepth() != currentDepth && transformsInBuffer == 0 {
+			currentDepth = generator.GetCurrentDepth()
+			// if max depth reached
+			if currentDepth == maxDepth+1 {
+				for i := 0; i < workers; i++ {
+					cubeTransformChan <- ""
+				}
+				for i := 0; i < workers; i++ {
+					<-cubeTransformWorkerStop
+				}
+				parallelLookup.StopForcefully()
+				return "", false
+			}
+		}
+		if generator.GetCurrentDepth() == currentDepth && transformsInBuffer < 32-len(baseRotations) {
+			baseTransform := generator.Next()
+			for _, baseRotation := range baseRotations {
+				cubeTransformChan <- baseRotation + baseTransform
+				transformsInBuffer += 1
+			}
+		}
+
+		// receive results, if found stop all
+		select {
+		case lookupResult = <-parallelLookup.resultsChan:
+			resultsFound = lookupResult.success
+			transformsInBuffer -= 1
+		default:
+
+		}
+
+		if resultsFound {
+			break
+		}
+	}
+
+	for i := 0; i < workers; i++ {
+		cubeTransformChan <- ""
+	}
+	for i := 0; i < workers; i++ {
+		<-cubeTransformWorkerStop
+	}
+	parallelLookup.StopForcefully()
+	return lookupResult.data.(string) + lookupResult.solution, true
+}

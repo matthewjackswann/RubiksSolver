@@ -200,3 +200,59 @@ func generateRandomCubeWithSolutionLength(stringLength int) (string, *cube.Cube)
 	c.Transform(cubeSetup)
 	return cubeSetup, c
 }
+
+func TestLayerPlus2(t *testing.T) {
+	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
+	rand.Seed(2)
+
+	stringLength := getLastFullLayer(db.GetNextTransforms().EncodedStack) + 2
+
+	for i := 0; i < 10000; i++ {
+		cubeSetup := ""
+		for j := 0; j < stringLength; j++ {
+			cubeSetup += []string{"f", "F", "u", "U", "l", "L", "r", "R", "b", "B", "d", "D"}[rand.Intn(12)]
+		}
+
+		c := cube.NewSolvedCube()
+		c.Transform(cubeSetup)
+
+		solution, solFound := db.SolveCubeBySearch(c, 6, 2)
+		if !solFound {
+			t.Errorf("Cube with setup %s should have a solution within two moves in the DB", cubeSetup)
+		}
+		c.Transform(solution)
+		if !c.IsSolved() {
+			t.Errorf("Provided solution %s for cube with scramble %s doesn't solve the cube", solution, cubeSetup)
+		}
+	}
+
+	db.Close()
+}
+
+func TestLayerPlus5(t *testing.T) {
+	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
+	rand.Seed(3)
+
+	stringLength := getLastFullLayer(db.GetNextTransforms().EncodedStack) + 5
+
+	for i := 0; i < 10; i++ {
+		cubeSetup := ""
+		for j := 0; j < stringLength; j++ {
+			cubeSetup += []string{"f", "F", "u", "U", "l", "L", "r", "R", "b", "B", "d", "D"}[rand.Intn(12)]
+		}
+
+		c := cube.NewSolvedCube()
+		c.Transform(cubeSetup)
+
+		solution, solFound := db.SolveCubeBySearch(c, 6, 5)
+		if !solFound {
+			t.Errorf("Cube with setup %s should have a solution within two moves in the DB", cubeSetup)
+		}
+		c.Transform(solution)
+		if !c.IsSolved() {
+			t.Errorf("Provided solution %s for cube with scramble %s doesn't solve the cube", solution, cubeSetup)
+		}
+	}
+
+	db.Close()
+}

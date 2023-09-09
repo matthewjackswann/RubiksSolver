@@ -167,6 +167,18 @@ func (p ParallelDatabaseLookup) Stop() {
 	}
 }
 
+func (p ParallelDatabaseLookup) StopForcefully() {
+	for i := 0; i < p.workerCount; i++ {
+		p.requestChan <- nil
+	}
+	for i := 0; i < p.workerCount; i++ {
+		r := <-p.resultsChan
+		if r != nil {
+			i -= 1 // wait an extra iteration
+		}
+	}
+}
+
 func CreateLookupWorkers(bufferSize, workerCount int) ParallelDatabaseLookup {
 	requestChan := make(chan *lookupWorkerRequest, bufferSize)
 	resultsChan := make(chan *lookupWorkerResponse, bufferSize)
