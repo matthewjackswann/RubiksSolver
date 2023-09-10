@@ -82,7 +82,7 @@ const createSubCube = (pos, faces) => {
 }
 
 const colourCubeFace = (face, colour, {cube, colours}) => {
-  if (face === "") { //todo streamline
+  if (face === "") {
     for (let i = 0; i + 2 < colours.length ; i += 3) {
       colours[i] = defaultSideColour.r;
       colours[i+1] = defaultSideColour.g;
@@ -139,8 +139,27 @@ const App = () => {
     .then(response => response.json())
     .then(data => {
       setCubeLayout(data);
+    }).catch(e => {
+      console.log("Error transforming cube")
+      console.log(e);
     });
   }, [cubeLayout, setCubeLayout]);
+
+  const solveCubeMinimal = () => {
+    fetch(window.location.href + "cubeMinimalSol", {
+      method: "POST",
+      body: JSON.stringify({CubeLayout: cubeLayout})
+    })
+    .then(response => {
+      if (!response.ok) throw new Error("Error fetching cube solution");
+      return response.text();
+    })
+    .then(data => {
+      setTransformQueue(data);
+    }).catch(e => {
+      console.log(e)
+    });
+  };
 
   renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -185,6 +204,9 @@ const App = () => {
       }}/>
       <button onClick={() => setPlayTransforms(prev => !prev)} >
         {playTransforms ? "Pause": "Play"}
+      </button>
+      <button onClick={solveCubeMinimal}>
+        Get Minimal Solution (May be very slow)
       </button>
       <div id="sceneContainer" />
     </div>
