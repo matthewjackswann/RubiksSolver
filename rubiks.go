@@ -56,7 +56,7 @@ func main() {
 // server stuff
 
 func startServer(port int) {
-	fmt.Println("Starting Server\nUse ^C to stop")
+	fmt.Printf("Starting Server at localhost:%d \nUse ^C to stop\n", port)
 	http.Handle("/", http.FileServer(http.Dir("./frontEnd/build")))
 	http.HandleFunc("/cube", fulfillCubeTransformRequest)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)

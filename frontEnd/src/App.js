@@ -2,7 +2,7 @@ import './App.css';
 import * as THREE from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-import { useEffect, useState } from 'react';
+import {useCallback, useEffect, useState} from 'react';
 
 const faceOffsetMap = {"F": 672 * 3, "L": 222 * 3, "B": 822 * 3, "R": 72 * 3, "U": 372 * 3, "D": 522 * 3}
 
@@ -128,12 +128,42 @@ const animate = () => {
 
 const App = () => {
   const [cubeLayout, setCubeLayout] = useState(startingCube);
+  const [transformQueue, setTransformQueue] = useState("")
+  const [playTransforms, setPlayTransforms] = useState(false)
+
+  const transformCube = useCallback(t => {
+    fetch(window.location.href + "cube", {
+      method: "POST",
+      body: JSON.stringify({CubeLayout: cubeLayout, Transformation: t})
+    })
+    .then(response => response.json())
+    .then(data => {
+      setCubeLayout(data);
+    });
+  }, [cubeLayout, setCubeLayout]);
 
   renderer.setSize(window.innerWidth, window.innerHeight);
 
   useEffect(() => {
     updateFaceColours(cubeLayout);
   }, [cubeLayout]);
+
+  useEffect(() => {
+    if (playTransforms) {
+      if (transformQueue === "") {
+        setPlayTransforms(false);
+        return;
+      }
+      const timerID = setTimeout(() => {
+        const transformStep = transformQueue.charAt(0);
+        transformCube(transformStep);
+        setTransformQueue(prev => prev.slice(1));
+      }, 1000)
+      return () => {
+        clearTimeout(timerID)
+      };
+    }
+  }, [playTransforms, transformQueue, transformCube])
 
   useEffect(() => {
     subCubeArray.forEach(c => scene.add(c.cube));
@@ -145,17 +175,17 @@ const App = () => {
     <div>
       {
         transforms.map(t => <button key={t} onClick={() => {
-          fetch(window.location.href + "cube", {
-            method: "POST",
-            body: JSON.stringify({CubeLayout: cubeLayout, Transformation: t})
-          })
-          .then(response => response.json())
-          .then(data => {
-            setCubeLayout(data);
-            console.log(data);
-          });
+          setPlayTransforms(false)
+          transformCube(t);
         }}>{t}</button>)
       }
+      <input type="text" value={transformQueue} onChange={(e) => {
+        setTransformQueue(e.target.value);
+        setPlayTransforms(false)
+      }}/>
+      <button onClick={() => setPlayTransforms(prev => !prev)} >
+        {playTransforms ? "Pause": "Play"}
+      </button>
       <div id="sceneContainer" />
     </div>
   );
