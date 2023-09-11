@@ -152,10 +152,10 @@ const App = () => {
     })
     .then(response => {
       if (!response.ok) throw new Error("Error fetching cube solution");
-      return response.text();
+      return response.json();
     })
     .then(data => {
-      setTransformQueue(data);
+      setTransformQueue(data["transform"]);
     }).catch(e => {
       console.log(e)
     });

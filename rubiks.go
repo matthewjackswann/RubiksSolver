@@ -12,11 +12,6 @@ import (
 	"strings"
 )
 
-type CubeData struct {
-	CubeLayout     [54]int
-	Transformation string
-}
-
 func main() {
 	serverFlags := flag.NewFlagSet("server", flag.ExitOnError)
 	serverPort := serverFlags.Int("port", 3000, "Port the server will be hosted on")
@@ -59,12 +54,18 @@ func startServer(port int) {
 	fmt.Printf("Starting Server at localhost:%d \nUse ^C to stop\n", port)
 	http.Handle("/", http.FileServer(http.Dir("./frontEnd/build")))
 	http.HandleFunc("/cube", fulfillCubeTransformRequest)
+	http.HandleFunc("/cubeMinimalSol", fulfillCubeMinimalSolveRequest)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	if err != nil {
 		fmt.Println("Couldn't start server")
 		fmt.Println(err.Error())
 		return
 	}
+}
+
+type CubeData struct {
+	CubeLayout     [54]int
+	Transformation string
 }
 
 func fulfillCubeTransformRequest(w http.ResponseWriter, r *http.Request) {
@@ -82,6 +83,39 @@ func fulfillCubeTransformRequest(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(c.Layout)
+	if err != nil {
+		fmt.Println(fmt.Errorf("error: %v", err))
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+type CubeDescription struct {
+	CubeLayout [54]int
+}
+
+type CubeSolution struct {
+	Success   bool   `json:"success"`
+	Transform string `json:"transform"`
+}
+
+func fulfillCubeMinimalSolveRequest(w http.ResponseWriter, r *http.Request) {
+	data := new(CubeDescription)
+	err := json.NewDecoder(r.Body).Decode(data)
+	if err != nil {
+		fmt.Println(fmt.Errorf("error: %v", err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	db := util.CreateDBConnection("/media/swanny/Lexar/rubiks.db")
+	c := cube.NewCube(data.CubeLayout)
+	solution, success := db.SolveCubeBySearch(c, 6, 10)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(CubeSolution{
+		Success:   success,
+		Transform: solution,
+	})
 	if err != nil {
 		fmt.Println(fmt.Errorf("error: %v", err))
 		w.WriteHeader(http.StatusInternalServerError)
