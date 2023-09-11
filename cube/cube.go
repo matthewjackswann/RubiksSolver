@@ -571,23 +571,13 @@ func inverseRotationTransform(m map[rune]rune) map[rune]rune {
 	return n
 }
 
-func getRotationMap(rotation rune) map[rune]rune {
-	switch rotation {
-	case 'X':
-		return xRotationTransform
-	case 'x':
-		return xiRotationTransform
-	case 'Y':
-		return yRotationTransform
-	case 'y':
-		return yiRotationTransform
-	case 'Z':
-		return zRotationTransform
-	case 'z':
-		return ziRotationTransform
-	default:
-		panic("Invalid Transform :" + string(rotation) + "\n")
-	}
+var rotationMap = map[rune]map[rune]rune{
+	'X': xRotationTransform,
+	'x': xiRotationTransform,
+	'Y': yRotationTransform,
+	'y': yiRotationTransform,
+	'Z': zRotationTransform,
+	'z': ziRotationTransform,
 }
 
 func RotateTransform(rotation, transform string) string {
@@ -601,7 +591,10 @@ func RotateTransform(rotation, transform string) string {
 	}
 	faceMapB := make(map[rune]rune, 6)
 	for _, char := range []rune(rotation) {
-		m := getRotationMap(char)
+		m, validRotation := rotationMap[char]
+		if !validRotation {
+			continue
+		}
 		for k, v := range m {
 			faceMapB[k] = faceMapA[v]
 		}
