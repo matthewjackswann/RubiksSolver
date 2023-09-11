@@ -94,7 +94,7 @@ func (dbConnection *DBConnection) SolveCubeBySearch(baseCube *cube.Cube, workers
 		}()
 	}
 
-	generator := cube.CreateNewGenerator([]int{0}, 0, "../cube/graph.csv")
+	generator := cube.CreateNewGenerator([]int{0}, 0, cube.ID_TRANSFORM_GRAPH)
 	baseRotations := baseCube.GetNonSymmetricalRotations()
 
 	resultsFound := false

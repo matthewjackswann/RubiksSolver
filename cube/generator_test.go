@@ -7,7 +7,7 @@ import (
 
 // check if a string fails the regex then it's not in the generator output
 func TestGenerator_Accuracy(t *testing.T) {
-	g := CreateNewGenerator([]int{0}, 0, "graph.csv")
+	g := CreateNewGenerator([]int{0}, 0, ID_TRANSFORM_GRAPH)
 
 	// map of all transforms. Being used as a set implementation
 	transforms := map[string]struct{}{}
@@ -46,7 +46,7 @@ func TestGenerator_Accuracy(t *testing.T) {
 func TestGenerator_Valid(t *testing.T) {
 	// This is a blacklist, accepted transforms shouldn't match
 	testingRegex := regexp.MustCompile("fF|ff|Ff|lL|ll|Ll|uU|uu|Uu|bB|bb|Bb|rR|rr|Rr|dD|dd|Dd|(B|b|(B2))(F|f|(F2))|(R|r|(R2))(L|l|(L2))|(D|d|(D2))(U|u|(U2))")
-	g := CreateNewGenerator([]int{0}, 0, "graph.csv")
+	g := CreateNewGenerator([]int{0}, 0, ID_TRANSFORM_GRAPH)
 	for i := 0; i < 10000; i++ {
 		s := g.Next()
 		failed := testingRegex.FindString(s) != "" // this doesn't work

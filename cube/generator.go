@@ -1,10 +1,11 @@
 package cube
 
 import (
+	"embed"
 	"encoding/csv"
 	"fmt"
+	"io/fs"
 	"log"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -96,12 +97,17 @@ func CreateNewGenerator(stack []int, transformNo int, file string) Generator {
 	return *g
 }
 
+//go:embed generator_graphs/*
+var fileContent embed.FS
+
+const ID_TRANSFORM_GRAPH = "generator_graphs/graph.csv"
+
 func createGraphFromFile(file string) Node {
-	f, err := os.Open(file)
+	f, err := fileContent.Open(file)
 	if err != nil {
 		log.Fatal("Unable to read input file graph.csv\n", err)
 	}
-	defer func(f *os.File) {
+	defer func(f fs.File) {
 		err := f.Close()
 		if err != nil {
 			log.Fatal("Couldn't close file graph.csv")
