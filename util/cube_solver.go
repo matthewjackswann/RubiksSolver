@@ -148,5 +148,5 @@ func (dbConnection *DBConnection) SolveCubeBySearch(baseCube *cube.Cube, workers
 		<-cubeTransformWorkerStop
 	}
 	parallelLookup.StopForcefully()
-	return lookupResult.data.(string) + lookupResult.solution, true
+	return cube.RemoveRotationTransforms(lookupResult.data.(string) + lookupResult.solution), true
 }

@@ -145,3 +145,20 @@ func TestCube_GetNonSymmetricalRotations(t *testing.T) {
 		t.Error("A cube with setup FB should have 3 different rotations")
 	}
 }
+
+func TestRemoveRotationTransforms(t *testing.T) {
+	tests := [][2]string{
+		{"XFXFXFXF", "DBUF"},
+		{"xFxFxFxF", "UBDF"},
+		{"XXFXXF", "BF"},
+		{"YYFYYF", "BF"},
+		{"ZZFZZF", "FF"},
+	}
+	for _, test := range tests {
+		before := test[0]
+		after := test[1]
+		if RemoveRotationTransforms(before) != after {
+			t.Errorf("%s should be reduced to %s rather than %s", before, after, RemoveRotationTransforms(before))
+		}
+	}
+}
