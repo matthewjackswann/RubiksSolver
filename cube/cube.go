@@ -523,7 +523,7 @@ func (cube *Cube) GetNonSymmetricalRotations() []string {
 			}
 		}
 		if unseenId {
-			rotations = append(rotations, strings.ToLower(idTranslationTransforms[i]))
+			rotations = append(rotations, idTranslationTransforms[i])
 			ids = append(ids, thisId)
 		}
 	}
@@ -623,4 +623,40 @@ func ReverseTransform(transform string) string {
 		}
 	}
 	return res.String()
+}
+
+func RemoveRotationTransforms(transform string) string {
+	result := strings.Builder{}
+	faceMapA := map[rune]rune{
+		'F': 'F',
+		'L': 'L',
+		'R': 'R',
+		'B': 'B',
+		'U': 'U',
+		'D': 'D',
+	}
+	faceMapB := make(map[rune]rune, 6)
+	for _, char := range []rune(transform) {
+		_, validRotation := rotationMap[char]
+		if validRotation {
+			var m map[rune]rune
+			if unicode.IsUpper(char) {
+				m = rotationMap[unicode.ToLower(char)]
+			} else {
+				m = rotationMap[unicode.ToUpper(char)]
+			}
+			for k, v := range m {
+				faceMapB[k] = faceMapA[v]
+			}
+			faceMapA, faceMapB = faceMapB, faceMapA
+		} else { // must be a transform
+			if unicode.IsUpper(char) {
+				result.WriteRune(faceMapA[char])
+			} else {
+				result.WriteRune(unicode.ToLower(faceMapA[unicode.ToUpper(char)]))
+			}
+		}
+
+	}
+	return result.String()
 }
