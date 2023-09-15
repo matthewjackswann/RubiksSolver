@@ -1,11 +1,14 @@
 package cube
 
 import (
+	"flag"
 	"fmt"
 	"reflect"
 	"strings"
 	"testing"
 )
+
+var _ = flag.String("db", "", "unused flag to allow testing of all packages with one command")
 
 func newTestingCube() *Cube {
 	return &Cube{

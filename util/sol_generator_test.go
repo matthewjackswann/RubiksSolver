@@ -1,6 +1,7 @@
 package util
 
 import (
+	"flag"
 	"fmt"
 	"github.com/matthewjackswann/rubiks/cube"
 	"math/rand"
@@ -11,6 +12,16 @@ import (
 func getLastFullLayer(stack string) int {
 	stackString := strings.Split(stack, ",")
 	return len(stackString) - 1
+}
+
+var dbConnString = flag.String("db", "", "path to the database location")
+
+func getDBConnectionStringFromFlags(t *testing.T) string {
+	if *dbConnString == "" {
+		t.Skip("No database path specified. Use -args -db \"<path>\"")
+		return ""
+	}
+	return *dbConnString
 }
 
 func checkTransformInverseExists(t *testing.T, moves string, db DBConnection, maxLength int) {
@@ -31,7 +42,11 @@ func checkTransformInverseExists(t *testing.T, moves string, db DBConnection, ma
 }
 
 func TestOneMoveCubes(t *testing.T) {
-	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
+	dbString := getDBConnectionStringFromFlags(t)
+	if dbString == "" {
+		return
+	}
+	db := CreateDBConnection(dbString)
 
 	if getLastFullLayer(db.GetNextTransforms().EncodedStack) < 1 {
 		t.Skip("Layer 1 is not in the database")
@@ -45,7 +60,11 @@ func TestOneMoveCubes(t *testing.T) {
 }
 
 func TestTwoMoveCubes(t *testing.T) {
-	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
+	dbString := getDBConnectionStringFromFlags(t)
+	if dbString == "" {
+		return
+	}
+	db := CreateDBConnection(dbString)
 
 	if getLastFullLayer(db.GetNextTransforms().EncodedStack) < 2 {
 		t.Skip("Layer 2 is not in the database")
@@ -61,7 +80,11 @@ func TestTwoMoveCubes(t *testing.T) {
 }
 
 func TestThreeMoveCubes(t *testing.T) {
-	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
+	dbString := getDBConnectionStringFromFlags(t)
+	if dbString == "" {
+		return
+	}
+	db := CreateDBConnection(dbString)
 
 	if getLastFullLayer(db.GetNextTransforms().EncodedStack) < 3 {
 		t.Skip("Layer 3 is not in the database")
@@ -79,7 +102,11 @@ func TestThreeMoveCubes(t *testing.T) {
 }
 
 func TestFourMoveCubes(t *testing.T) {
-	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
+	dbString := getDBConnectionStringFromFlags(t)
+	if dbString == "" {
+		return
+	}
+	db := CreateDBConnection(dbString)
 
 	if getLastFullLayer(db.GetNextTransforms().EncodedStack) < 4 {
 		t.Skip("Layer 4 is not in the database")
@@ -99,7 +126,11 @@ func TestFourMoveCubes(t *testing.T) {
 }
 
 func TestFiveMoveCubes(t *testing.T) {
-	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
+	dbString := getDBConnectionStringFromFlags(t)
+	if dbString == "" {
+		return
+	}
+	db := CreateDBConnection(dbString)
 
 	if getLastFullLayer(db.GetNextTransforms().EncodedStack) < 5 {
 		t.Skip("Layer 5 is not in the database")
@@ -121,7 +152,11 @@ func TestFiveMoveCubes(t *testing.T) {
 }
 
 func TestOneMillionCubes(t *testing.T) {
-	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
+	dbString := getDBConnectionStringFromFlags(t)
+	if dbString == "" {
+		return
+	}
+	db := CreateDBConnection(dbString)
 	rand.Seed(0)
 
 	stringLength := getLastFullLayer(db.GetNextTransforms().EncodedStack)
@@ -141,7 +176,11 @@ func TestOneMillionCubes(t *testing.T) {
 }
 
 func TestOneMillionCubesThreaded(t *testing.T) {
-	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
+	dbString := getDBConnectionStringFromFlags(t)
+	if dbString == "" {
+		return
+	}
+	db := CreateDBConnection(dbString)
 	stringLength := getLastFullLayer(db.GetNextTransforms().EncodedStack)
 	db.Close()
 
@@ -202,7 +241,11 @@ func generateRandomCubeWithSolutionLength(stringLength int) (string, *cube.Cube)
 }
 
 func TestLayerPlus2(t *testing.T) {
-	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
+	dbString := getDBConnectionStringFromFlags(t)
+	if dbString == "" {
+		return
+	}
+	db := CreateDBConnection(dbString)
 	rand.Seed(2)
 
 	stringLength := getLastFullLayer(db.GetNextTransforms().EncodedStack) + 2
@@ -230,7 +273,11 @@ func TestLayerPlus2(t *testing.T) {
 }
 
 func TestLayerPlus5(t *testing.T) {
-	db := CreateDBConnection("/media/swanny/Lexar/rubiks.db")
+	dbString := getDBConnectionStringFromFlags(t)
+	if dbString == "" {
+		return
+	}
+	db := CreateDBConnection(dbString)
 	rand.Seed(3)
 
 	stringLength := getLastFullLayer(db.GetNextTransforms().EncodedStack) + 5
