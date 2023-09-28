@@ -358,6 +358,7 @@ func NewCube(layout [54]int) *Cube {
 	}
 }
 
+// maintains an older previous state to save on creating a new array each transform
 func (cube *Cube) applyTransformMap(transformMap map[int]int) {
 	for i := 0; i < 54; i++ {
 		newIndex, exists := transformMap[i]
@@ -367,7 +368,8 @@ func (cube *Cube) applyTransformMap(transformMap map[int]int) {
 			cube.previousLayout[i] = cube.Layout[i] // loads into old state
 		}
 	}
-	cube.previousLayout, cube.Layout = cube.Layout, cube.previousLayout // swaps old state and new state
+	// swaps old state and new state
+	cube.previousLayout, cube.Layout = cube.Layout, cube.previousLayout
 }
 
 func (cube *Cube) transform(t string) {
