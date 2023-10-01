@@ -94,8 +94,15 @@ func (dbConnection *DBConnection) SolveCubeBySearch(baseCube *cube.Cube, workers
 		}()
 	}
 
-	generator := cube.CreateNewGenerator([]int{0}, 0, cube.ID_TRANSFORM_GRAPH)
 	baseRotations := baseCube.GetNonSymmetricalRotations()
+
+	var generator cube.Generator
+	if len(baseRotations) < 6 {
+		generator = cube.CreateNewGenerator([]int{0}, 0, cube.ID_TRANSFORM_GRAPH)
+	} else {
+		generator = cube.CreateNewGenerator([]int{0}, 0, cube.TRANSFORM_GRAPH)
+		baseRotations = []string{""} // no need to consider any other rotations. Just use the identity
+	}
 
 	resultsFound := false
 	var lookupResult *lookupWorkerResponse

@@ -100,7 +100,8 @@ func CreateNewGenerator(stack []int, transformNo int, file string) Generator {
 //go:embed generator_graphs/*
 var fileContent embed.FS
 
-const ID_TRANSFORM_GRAPH = "generator_graphs/graph.csv"
+const ID_TRANSFORM_GRAPH = "generator_graphs/id_transform_graph.csv"
+const TRANSFORM_GRAPH = "generator_graphs/transform_graph.csv"
 
 func createGraphFromFile(file string) Node {
 	f, err := fileContent.Open(file)
