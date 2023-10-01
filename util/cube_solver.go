@@ -8,7 +8,6 @@ import (
 )
 
 func loadSolution(id uint128.Uint128, preparedStmt *sql.Stmt) (string, bool) {
-	//result, err := dbConnection.db.Query(fmt.Sprintf("SELECT solution FROM cubes WHERE cube_id_l = %d AND cube_id_h = %d;", int64(id.L), int64(id.H)))
 	result, err := preparedStmt.Query(int64(id.L), int64(id.H))
 	if err != nil {
 		fmt.Println(err)
@@ -59,6 +58,10 @@ func (dbConnection *DBConnection) LookupCube(cubeId uint128.Uint128, rotation st
 
 func (dbConnection *DBConnection) lookupCube(cubeId uint128.Uint128, rotation string, stmt *sql.Stmt) (string, bool) {
 	idSolution, success := loadSolution(cubeId, stmt)
+	if stmt.Close() != nil {
+		fmt.Println("Error closing statement")
+		return "", false
+	}
 	if !success {
 		return "", false
 	}
