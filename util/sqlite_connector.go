@@ -7,10 +7,12 @@ import (
 	"github.com/matthewjackswann/rubiks/cube"
 	_ "github.com/mattn/go-sqlite3" // needed to include sqlite driver
 	"log"
+	"strings"
 )
 
 type DBConnection struct {
 	db        *sql.DB
+	path      string
 	connected bool
 }
 
@@ -22,6 +24,7 @@ func CreateDBConnection(path string) DBConnection {
 
 	dbConnection := DBConnection{
 		db:        db,
+		path:      path,
 		connected: true,
 	}
 
@@ -179,12 +182,13 @@ func (p ParallelDatabaseLookup) StopForcefully() {
 	}
 }
 
-func CreateLookupWorkers(bufferSize, workerCount int) ParallelDatabaseLookup {
+func CreateLookupWorkers(bufferSize, workerCount int, dbPath string) ParallelDatabaseLookup {
 	requestChan := make(chan *lookupWorkerRequest, bufferSize)
 	resultsChan := make(chan *lookupWorkerResponse, bufferSize)
 	for worker := 0; worker < workerCount; worker++ {
 		go func() {
-			dbConnection := CreateDBConnection("/media/swanny/Lexar/rubiks.db?cache=shared&mode=ro")
+			trimmedDbPath, _, _ := strings.Cut(dbPath, "?")
+			dbConnection := CreateDBConnection(trimmedDbPath + "?cache=shared&mode=ro")
 			stmt, err := dbConnection.db.Prepare("SELECT solution FROM cubes WHERE cube_id_l = ? AND cube_id_h = ?;")
 			if err != nil {
 				fmt.Printf("Error creating prepared statement\n")

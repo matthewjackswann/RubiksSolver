@@ -78,7 +78,7 @@ func (dbConnection *DBConnection) SolveCubeBySearch(baseCube *cube.Cube, workers
 		return solution, true
 	}
 
-	parallelLookup := CreateLookupWorkers(32, workers)
+	parallelLookup := CreateLookupWorkers(32, workers, dbConnection.path)
 	cubeTransformChan := make(chan string, 32)
 	cubeTransformWorkerStop := make(chan interface{}, workers)
 

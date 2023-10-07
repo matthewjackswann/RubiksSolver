@@ -184,7 +184,7 @@ func TestOneMillionCubesThreaded(t *testing.T) {
 	stringLength := getLastFullLayer(db.GetNextTransforms().EncodedStack)
 	db.Close()
 
-	parallelLookup := CreateLookupWorkers(64, 8)
+	parallelLookup := CreateLookupWorkers(64, 8, db.path)
 	requestChan := parallelLookup.requestChan
 	resultsChan := parallelLookup.resultsChan
 

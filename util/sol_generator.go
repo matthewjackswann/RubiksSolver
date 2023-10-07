@@ -8,6 +8,7 @@ import (
 	"golang.org/x/sys/unix"
 	"math"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -201,11 +202,11 @@ func saveWorker(db DBConnection, dbSaveChan chan batchResults, dbSaveChanResult 
 		if len(toSave.lastTransform) != lastStackSize {
 			lastStackSize = len(toSave.lastTransform)
 			fmt.Print("\033[1A\x1b[2K")
-			fmt.Printf("Stack %d: %f%%\n\n", lastStackSize, getDiskUsePercentage())
+			fmt.Printf("Stack %d: %f%%\n\n", lastStackSize, getDiskUsePercentage(db.path))
 		}
 
 		success := db.Save(toSave.results, toSave.transformNo, encodedStack)
-		if getDiskUsePercentage() > 99.9 {
+		if getDiskUsePercentage(db.path) > 99.9 {
 			fmt.Println("Disk low on space")
 			dbSaveChanResult <- false
 		} else {
@@ -214,9 +215,9 @@ func saveWorker(db DBConnection, dbSaveChan chan batchResults, dbSaveChanResult 
 	}
 }
 
-func getDiskUsePercentage() float64 {
+func getDiskUsePercentage(dbPath string) float64 {
 	var stat unix.Statfs_t
-	err := unix.Statfs("/media/swanny/Lexar", &stat)
+	err := unix.Statfs(path.Dir(dbPath), &stat)
 	if err != nil {
 		fmt.Printf("Error getting disk info: %s\n\n", err)
 		return -1
