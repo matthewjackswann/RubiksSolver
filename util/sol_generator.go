@@ -205,8 +205,7 @@ func saveWorker(db DBConnection, dbSaveChan chan batchResults, dbSaveChanResult 
 		}
 
 		success := db.Save(toSave.results, toSave.transformNo, encodedStack)
-		//if getDiskUsePercentage() > 99.9 {
-		if getDiskUsePercentage() > 0.1 {
+		if getDiskUsePercentage() > 99.9 {
 			fmt.Println("Disk low on space")
 			dbSaveChanResult <- false
 		} else {
