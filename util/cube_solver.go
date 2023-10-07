@@ -53,15 +53,18 @@ func (dbConnection *DBConnection) LookupCube(cubeId uint128.Uint128, rotation st
 		fmt.Printf("Error creating prepared statement %s\n", err)
 		return "", false
 	}
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			fmt.Println("Error closing statement")
+			fmt.Println(err)
+		}
+	}(stmt)
 	return dbConnection.lookupCube(cubeId, rotation, stmt)
 }
 
 func (dbConnection *DBConnection) lookupCube(cubeId uint128.Uint128, rotation string, stmt *sql.Stmt) (string, bool) {
 	idSolution, success := loadSolution(cubeId, stmt)
-	if stmt.Close() != nil {
-		fmt.Println("Error closing statement")
-		return "", false
-	}
 	if !success {
 		return "", false
 	}
