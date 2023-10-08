@@ -293,7 +293,7 @@ func TestLayerPlus5(t *testing.T) {
 
 		solution, solFound := db.SolveCubeBySearch(c, 6, 5)
 		if !solFound {
-			t.Errorf("Cube with setup %s should have a solution within two moves in the DB", cubeSetup)
+			t.Errorf("Cube with setup %s should have a solution within five moves in the DB", cubeSetup)
 		}
 		c.Transform(solution)
 		if !c.IsSolved() {
